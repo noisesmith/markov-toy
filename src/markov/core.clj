@@ -7,7 +7,7 @@
   [text base memory]
   (reduce
    (fn [m ngram]
-     (update-in m ngram (fnil inc 0)))
+     (update-in m [(butlast ngram) (last ngram)] (fnil inc 0)))
    {}
    (partition (inc memory) 1 (concat [:start] text [:stop]))))
 
@@ -24,22 +24,27 @@
        selector
        probs))))
 
-(defn gen-text
-  [markov & [start]]
-  (let [start (or start (pick (:start markov)))
-        next (pick (get markov start))]
+(defn gen-text*
+  [markov start]
+  (let [next (pick (get markov start))]
     (if (contains? #{nil :stop} next)
       nil
       (cons next
-            (lazy-seq (gen-text markov next))))))
+            (lazy-seq (gen-text* markov (concat (rest start) [next])))))))
+
+(defn gen-text
+  [markov start]
+  (apply str (concat (rest start) (gen-text* markov start))))
 
 (defn -main
   "generates a character-wise markov chain with memory 1 from an input file or
    the Gettysburg address"
-  [& [input]]
+  [& [memory input]]
   (let [markov (gen-chain (or (and input (slurp input))
                               (slurp (io/resource "gettysburg.txt")))
                           {}
-                          1)]
-    (pprint markov)
-    (println (apply str (gen-text markov)))))
+                          (Long. (or memory 1)))]
+    ;; (pprint markov)
+    (println (gen-text markov (rand-nth (filter #(= [:start]
+                                                    (take 1 %))
+                                                (keys markov)))))))

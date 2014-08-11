@@ -1,36 +1,18 @@
-# markov
+=======
+markov-toy
+==========
 
-FIXME: description
-
-## Installation
-
-Download from http://example.com/FIXME.
-
-## Usage
-
-FIXME: explanation
-
-    $ java -jar markov-0.1.0-standalone.jar [args]
-
+character markov generator, with arbitrary memory
 ## Options
 
-FIXME: listing of options this app accepts.
+`lein run [memory] [input-file]`
 
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
+memory defaults to 1, the input file defaults to the included text of Lincoln's Gettysburg Address.
 
 ## License
 
-Copyright © 2014 FIXME
+Copyright © 2014 Justin Glenn Smith
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
+
