@@ -4,11 +4,11 @@
   (:gen-class))
 
 (defn gen-chain
-  [text base memory]
+  [base text memory]
   (reduce
    (fn [m ngram]
      (update-in m [(butlast ngram) (last ngram)] (fnil inc 0)))
-   {}
+   base
    (partition (inc memory) 1 (concat [:start] text [:stop]))))
 
 (defn pick
@@ -39,11 +39,13 @@
 (defn -main
   "generates a character-wise markov chain with memory 1 from an input file or
    the Gettysburg address"
-  [& [memory input]]
-  (let [markov (gen-chain (or (and input (slurp input))
-                              (slurp (io/resource "gettysburg.txt")))
-                          {}
-                          (Long. (or memory 1)))]
+  [& [memory & input]]
+  (let [markov (reduce #(gen-chain %
+                                   %2
+                                   (Long. (or memory 1)))
+                       {}
+                       (or (and input (map slurp input))
+                           [(slurp (io/resource "gettysburg.txt"))]))]
     ;; (pprint markov)
     (println (gen-text markov (rand-nth (filter #(= [:start]
                                                     (take 1 %))
