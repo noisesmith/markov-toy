@@ -4,12 +4,12 @@
   (:gen-class))
 
 (defn gen-chain
-  [text & [base]]
+  [text base memory]
   (reduce
-   (fn [m [c c']]
-     (update-in m [c c'] (fnil inc 0)))
-   (or base {})
-   (partition 2 1 (concat [:start] text [:stop]))))
+   (fn [m ngram]
+     (update-in m ngram (fnil inc 0)))
+   {}
+   (partition (inc memory) 1 (concat [:start] text [:stop]))))
 
 (defn pick
   [probs]
@@ -34,8 +34,12 @@
             (lazy-seq (gen-text markov next))))))
 
 (defn -main
-  "I don't do a whole lot ... yet."
+  "generates a character-wise markov chain with memory 1 from an input file or
+   the Gettysburg address"
   [& [input]]
   (let [markov (gen-chain (or (and input (slurp input))
-                              (slurp (io/resource "gettysburg.txt"))))]
+                              (slurp (io/resource "gettysburg.txt")))
+                          {}
+                          1)]
+    (pprint markov)
     (println (apply str (gen-text markov)))))
