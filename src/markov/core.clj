@@ -12,10 +12,10 @@
    (partition (inc memory) 1 (concat [:start] text [:stop]))))
 
 (defn pick
-  [probs]
+  [probs random]
   (when probs
     (let [total (apply + (vals probs))
-          selector (rand-int total)]
+          selector (.nextInt random total)]
       (reduce
        (fn [selector [token chance]]
          (if (< selector chance)
@@ -25,27 +25,34 @@
        probs))))
 
 (defn gen-text*
-  [markov start]
-  (let [next (pick (get markov start))]
+  [markov start random]
+  (let [next (pick (get markov start) random)]
     (if (contains? #{nil :stop} next)
       nil
       (cons next
-            (lazy-seq (gen-text* markov (concat (rest start) [next])))))))
+            (lazy-seq
+             (gen-text* markov (concat (rest start) [next]) random))))))
 
 (defn gen-text
-  [markov start]
-  (apply str (concat (rest start) (gen-text* markov start))))
+  [markov start random]
+  (apply str (concat (rest start) (gen-text* markov start random))))
 
 (defn -main
   "generates a character-wise markov chain with memory 1 from an input file or
    the Gettysburg address"
-  [& [memory & input]]
+  [& [seed memory & input]]
   (let [input (or input [(io/resource "gettysburg.txt")])
         memory (Long. (or memory "1"))
         markov (reduce #(gen-chain % %2 memory)
                        {}
-                       (map slurp input))]
+                       (map slurp input))
+        seed (try (Long. seed)
+                  (catch Exception e (.getTime (java.util.Date.))))
+        random (java.util.Random. seed)
+        starts (filter #(= [:start]
+                           (take 1 %))
+                       (keys markov))
+        start-index (.nextInt random (count starts))
+        start (nth starts start-index)]
     ;; (pprint markov)
-    (println (gen-text markov (rand-nth (filter #(= [:start]
-                                                    (take 1 %))
-                                                (keys markov)))))))
+    (println (gen-text markov start random))))
