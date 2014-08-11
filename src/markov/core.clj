@@ -40,12 +40,11 @@
   "generates a character-wise markov chain with memory 1 from an input file or
    the Gettysburg address"
   [& [memory & input]]
-  (let [markov (reduce #(gen-chain %
-                                   %2
-                                   (Long. (or memory 1)))
+  (let [input (or input [(io/resource "gettysburg.txt")])
+        memory (Long. (or memory "1"))
+        markov (reduce #(gen-chain % %2 memory)
                        {}
-                       (or (and input (map slurp input))
-                           [(slurp (io/resource "gettysburg.txt"))]))]
+                       (map slurp input))]
     ;; (pprint markov)
     (println (gen-text markov (rand-nth (filter #(= [:start]
                                                     (take 1 %))
